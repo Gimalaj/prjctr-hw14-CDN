@@ -1,0 +1,85 @@
+version: '3'
+services:
+  bindserver:
+    image: sameersbn/bind:9.16.1-20200524
+    restart: always
+    networks:
+      - mynetwork
+    ports:
+      - 53:53/tcp
+      - 53:53/udp
+      - 10000:10000/tcp
+    volumes:
+      - ./bind:/data
+      - ./bind/named.conf.local:/etc/bind/named.conf.local
+      - ./bind/db.example.com:/etc/bind/db.example.com
+      - ./bind/db.192.168.1:/etc/bind/db.192.168.1
+      - ./bind/GeoIP.dat:/etc/bind/GeoIP.dat
+
+
+  loadbalancer1:
+    image: nginx
+    networks:
+      - mynetwork
+    volumes:
+      - ./nginx/loadbalancer.conf:/etc/nginx/nginx.conf
+      - ./bind/GeoIP.dat:/etc/bind/GeoIP.dat
+    ports:
+      - 80:80
+    depends_on:
+      - bindserver
+
+  loadbalancer2:
+    image: nginx
+    networks:
+      - mynetwork
+    volumes:
+      - ./nginx/loadbalancer.conf:/etc/nginx/nginx.conf
+      - ./bind/GeoIP.dat:/etc/bind/GeoIP.dat
+    ports:
+      - 81:80
+    depends_on:
+      - bindserver
+
+  node1:
+    image: nginx
+    networks:
+      - mynetwork
+    volumes:
+      - ./nginx/index.html:/usr/share/nginx/html/index.html
+      - ./nginx/nginx1.conf:/etc/nginx/site-enabled/nginx.conf
+
+  node2:
+    image: nginx
+    networks:
+      - mynetwork
+    volumes:
+      - ./nginx/index.html:/usr/share/nginx/html/index.html
+      - ./nginx/nginx2.conf:/etc/nginx/site-enabled/nginx.conf
+
+
+  node3:
+    image: nginx
+    networks:
+      - mynetwork
+    volumes:
+      - ./nginx/index.html:/usr/share/nginx/html/index.html
+      - ./nginx/nginx3.conf:/etc/nginx/site-enabled/nginx.conf
+
+
+  node4:
+    image: nginx
+    networks:
+      - mynetwork
+    volumes:
+      - ./nginx/index.html:/usr/share/nginx/html/index.html
+      - ./nginx/nginx4.conf:/etc/nginx/site-enabled/nginx.conf
+
+volumes:
+  nginx-conf:
+
+networks:
+  mynetwork:
+    ipam:
+      config:
+        - subnet: 192.168.1.0/24
